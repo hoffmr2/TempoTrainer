@@ -6,7 +6,7 @@ from winsound import Beep
 class Metronome:
     """Create Metronome app with class instance."""
 
-    def __init__(self, root, beats):
+    def __init__(self, root):
         """Initiate default values for class and call interface().
 
         Args:
@@ -14,7 +14,6 @@ class Metronome:
             beats (list): Contains time signatures for metronome.
         """
         self.root = root
-        self.beats = beats
 
         self.start = False
         self.bpm = 0
@@ -32,32 +31,55 @@ class Metronome:
         frame = Frame()
         frame.pack()
 
-        entry = Entry(frame, width=8, justify="center")
-        entry.insert(0, "60")
-        entry.grid(row=0, column=0, padx=5, sticky="E")
+        # START TEMPO ENTRY
+        self.entry_bpm_start = Entry(frame, width=8, justify="center")
+        self.entry_bpm_start.insert(0, "60")
+        self.entry_bpm_start.grid(row=0, column=0, padx=5, sticky="E")
 
-        spinbox = Spinbox(frame, width=5, values=self.beats, wrap=True)
-        spinbox.grid(row=0, column=1, sticky="E")
+        # END TEMPO ENTRY
+        self.entry_bpm_end = Entry(frame, width=8, justify="center")
+        self.entry_bpm_end.insert(0, "120")
+        self.entry_bpm_end.grid(row=0, column=1, padx=5, sticky="E")
 
-        label_bpm = Label(frame, text="BPM:")
-        label_bpm.grid(row=0, column=0, sticky="W")
+        # TRAINING TIME ENTRY
+        self.entry_time = Entry(frame, width=8, justify="center")
+        self.entry_time.insert(0, "60")
+        self.entry_time.grid(row=1, column=0, padx=5, sticky="E")
 
-        label_time = Label(frame, text="Time:")
-        label_time.grid(row=0, column=1, padx=5, sticky="W")
+        # STEPS ENTRY
+        self.entry_steps = Entry(frame, width=8, justify="center")
+        self.entry_steps.insert(0, "10")
+        self.entry_steps.grid(row=1, column=1, padx=5, sticky="E")
 
-        label_count = Label(frame, textvariable=self.var, font=("Arial", 30))
-        label_count.grid(row=1, column=0, columnspan=2)
+        # BMP START LABEL
+        self.label_bpm_start = Label(frame, text="BPM START:")
+        self.label_bpm_start.grid(row=0, column=0, sticky="W")
 
-        button_start = Button(frame, text="Start", width=10, height=2,
-                              command=lambda: self.start_counter(entry,
-                                                                 spinbox))
-        button_start.grid(row=2, column=0, padx=10, sticky="W")
+        # BMP END LABEL
+        self.label_bpm_end = Label(frame, text="BPM END:")
+        self.label_bpm_end.grid(row=0, column=1, sticky="W")
 
-        button_stop = Button(frame, text="Stop", width=10, height=2,
+        # TIME LABEL
+        self.label_time = Label(frame, text="STEP TIME:")
+        self.label_time.grid(row=1, column=0, sticky="W")
+
+        # STEPS LABEL
+        self.label_steps = Label(frame, text="STEPS:")
+        self.label_steps.grid(row=1, column=1, sticky="W")
+
+
+        self.label_count = Label(frame, textvariable=self.var, font=("Arial", 30))
+        self.label_count.grid(row=3, column=0, columnspan=2)
+
+        self.button_start = Button(frame, text="Start", width=10, height=2,
+                              command=lambda: self.start_counter())
+        self.button_start.grid(row=2, column=0, padx=10, sticky="W")
+
+        self.button_stop = Button(frame, text="Stop", width=10, height=2,
                              command=lambda: self.stop_counter())
-        button_stop.grid(row=2, column=1, padx=10, sticky="E")
+        self.button_stop.grid(row=2, column=1, padx=10, sticky="E")
 
-    def start_counter(self, entry, spinbox):
+    def start_counter(self):
         """Start counter if self.start is False (prevents multiple starts).
 
         Args:
@@ -69,7 +91,7 @@ class Metronome:
         """
         if not self.start:
             try:
-                self.bpm = int(entry.get())
+                self.bpm = int(self.entry_bpm_start.get())
             except ValueError:
                 self.bpm = 60
             else:
@@ -77,39 +99,26 @@ class Metronome:
                     self.bpm = 300
 
             self.start = True
-            self.counter(spinbox)
+            self.counter()
 
     def stop_counter(self):
         """Stop counter by setting self.start to False."""
         self.start = False
 
-    def counter(self, spinbox):
+    def counter(self):
         """Control counter display and audio with calculated time delay.
 
         Args:
             spinbox (tkinter.Spinbox): tkinter Spinbox widget to get beat.
         """
         if self.start:
-            self.beat = int(spinbox.get()[0])
 
-            if self.beat == 6:  # 6/8 time
-                self.time = int((60 / (self.bpm / .5) - 0.1) * 1000)
-            else:
-                self.time = int((60 / self.bpm - 0.1) * 1000)  # Math for delay
+            self.time = int((60 / self.bpm - 0.1) * 1000)  # Math for delay
+            Beep(440, 100)
 
-            self.count += 1
-            self.var.set(self.count)
-
-            if self.count == 1:
-                Beep(880, 100)
-            elif self.count >= self.beat:
-                self.count = 0
-                Beep(440, 100)
-            else:
-                Beep(440, 100)
 
             # Calls this method after a certain amount of time (self.time).
-            self.root.after(self.time, lambda: self.counter(spinbox))
+            self.root.after(self.time, lambda: self.counter())
 
 
 def main():
@@ -117,8 +126,7 @@ def main():
     root = Tk()
     root.title("Metronome")
 
-    beats = ["4/4", "6/8", "2/4", "3/4"]
-    Metronome(root, beats)
+    Metronome(root)
 
     root.mainloop()
 
