@@ -17,6 +17,7 @@ class Metronome:
 
         self.start = False
         self.steps = 0
+        self.current_step = 0
         self.bpm = 0
         self.end_bpm = 0
         self.count = 0
@@ -28,6 +29,12 @@ class Metronome:
 
         self.var_bpm = StringVar()
         self.var_bpm.set(self.bpm)
+
+        self.var_time = StringVar()
+        self.var_time.set(self.bpm)
+
+        self.var_step = StringVar()
+        self.var_step.set('%d / %d' % (self.current_step, self.steps))
 
         self.interface()
 
@@ -74,7 +81,13 @@ class Metronome:
 
 
         self.label_count = Label(frame, textvariable=self.var_bpm, font=("Arial", 30))
-        self.label_count.grid(row=3, column=0, columnspan=1)
+        self.label_count.grid(row=3, column=0, columnspan=2)
+
+        self.label_step = Label(frame, textvariable=self.var_step, font=("Arial", 30))
+        self.label_step.grid(row=4, column=0, columnspan=2)
+
+        self.label_current_time = Label(frame, textvariable=self.var_time, font=("Arial", 30))
+        self.label_current_time.grid(row=5, column=0, columnspan=2)
 
         self.button_start = Button(frame, text="Start", width=10, height=2,
                               command=lambda: self.start_counter())
@@ -122,6 +135,7 @@ class Metronome:
             self.bpm_scale = pow(self.end_bpm / self.bpm, 1 / (self.steps - 1))
 
             self.cumulative_time = 0
+            self.current_step = 1
             self.start = True
             self.counter()
 
@@ -140,12 +154,15 @@ class Metronome:
             if self.cumulative_time > self.time_step * 1000: # as time_setp is in [s], and cumulative_time in [ms]
                 self.bpm = self.bpm * self.bpm_scale
                 self.cumulative_time = 0
-
+                self.current_step = self.current_step + 1
                 epsilon = 0.1 # to prevent from not playing final step
                 if self.bpm > self.end_bpm + epsilon:
                     self.stop_counter()
+            else:
+                self.var_step.set('%d / %d' % (self.current_step, self.steps))
+                self.var_bpm.set( float("{0:.1f}".format(self.bpm)))
+                self.var_time.set('%.1f / %d' % (float("{0:.1f}".format(self.cumulative_time / 1000)), self.time_step))
 
-            self.var_bpm.set( float("{0:.1f}".format(self.bpm)))
             self.time = int((60 / self.bpm - 0.1) * 1000)  # Math for delay
             self.cumulative_time = self.cumulative_time + self.time
             Beep(440, 100)
