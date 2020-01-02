@@ -16,13 +16,18 @@ class Metronome:
         self.root = root
 
         self.start = False
+        self.steps = 0
         self.bpm = 0
+        self.end_bpm = 0
         self.count = 0
         self.beat = 0
         self.time = 0
+        self.cumulative_time = 0
+        self.bpm_scale = 0
+        self.time_step = 0
 
-        self.var = StringVar()
-        self.var.set(self.count)
+        self.var_bpm = StringVar()
+        self.var_bpm.set(self.bpm)
 
         self.interface()
 
@@ -32,7 +37,7 @@ class Metronome:
         frame.pack()
 
         # START TEMPO ENTRY
-        self.entry_bpm_start = Entry(frame, width=8, justify="center")
+        self.entry_bpm_start = Entry(frame, width=6, justify="center")
         self.entry_bpm_start.insert(0, "60")
         self.entry_bpm_start.grid(row=0, column=0, padx=5, sticky="E")
 
@@ -68,8 +73,8 @@ class Metronome:
         self.label_steps.grid(row=1, column=1, sticky="W")
 
 
-        self.label_count = Label(frame, textvariable=self.var, font=("Arial", 30))
-        self.label_count.grid(row=3, column=0, columnspan=2)
+        self.label_count = Label(frame, textvariable=self.var_bpm, font=("Arial", 30))
+        self.label_count.grid(row=3, column=0, columnspan=1)
 
         self.button_start = Button(frame, text="Start", width=10, height=2,
                               command=lambda: self.start_counter())
@@ -98,6 +103,25 @@ class Metronome:
                 if self.bpm > 300:  # Limits BPM
                     self.bpm = 300
 
+            try:
+                self.time_step = int(self.entry_time.get())
+            except ValueError:
+                self.time_step = 60
+
+            try:
+                self.steps = int(self.entry_steps.get())
+            except ValueError:
+                self.steps = 10
+
+            try:
+                self.end_bpm = int(self.entry_bpm_end.get())
+            except ValueError:
+                self.time_step = 120
+
+            # compute scale factor
+            self.bpm_scale = pow(self.end_bpm / self.bpm, 1 / (self.steps - 1))
+
+            self.cumulative_time = 0
             self.start = True
             self.counter()
 
@@ -113,7 +137,17 @@ class Metronome:
         """
         if self.start:
 
+            if self.cumulative_time > self.time_step * 1000: # as time_setp is in [s], and cumulative_time in [ms]
+                self.bpm = self.bpm * self.bpm_scale
+                self.cumulative_time = 0
+
+                epsilon = 0.1 # to prevent from not playing final step
+                if self.bpm > self.end_bpm + epsilon:
+                    self.stop_counter()
+
+            self.var_bpm.set( float("{0:.1f}".format(self.bpm)))
             self.time = int((60 / self.bpm - 0.1) * 1000)  # Math for delay
+            self.cumulative_time = self.cumulative_time + self.time
             Beep(440, 100)
 
 
